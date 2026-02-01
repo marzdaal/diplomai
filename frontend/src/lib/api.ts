@@ -60,3 +60,33 @@ export async function replaceItem(id: string, type: "goal" | "task") {
 
   return (await response.json()) as { id: string; text: string };
 }
+
+export interface DocumentPayload {
+  profile: "gost" | "msu" | "hse";
+  title: {
+    university: string;
+    faculty: string;
+    department: string;
+    workTitle: string;
+    studentName: string;
+    supervisorName: string;
+    city: string;
+    year: string;
+  };
+  goals: string[];
+  tasks: string[];
+}
+
+export async function generateDocument(payload: DocumentPayload) {
+  const response = await fetch(`${API_BASE}/documents/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error("Не удалось сформировать документ.");
+  }
+
+  return await response.blob();
+}

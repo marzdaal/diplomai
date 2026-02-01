@@ -5,6 +5,7 @@ export interface SuggestionItem {
   type: ItemType;
   text: string;
   status?: "idle" | "loading";
+  selected?: boolean;
 }
 
 export interface StreamChunk {
