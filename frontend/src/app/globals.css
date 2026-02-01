@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans;
+}
+
+::selection {
+  background: rgba(31, 41, 55, 0.15);
+}
+
+.funnel {
+  position: relative;
+}
+
+.funnel::before {
+  content: "";
+  position: absolute;
+  left: 1.1rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(107, 111, 118, 0.2), rgba(107, 111, 118, 0.5));
+}
+
+.funnel-stage {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.funnel-stage.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
