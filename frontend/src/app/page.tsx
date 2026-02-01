@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ActionCard from "@/components/ActionCard";
 import { rephraseItem, replaceItem, streamGenerate } from "@/lib/api";
 import type { SuggestionItem } from "@/lib/types";
@@ -11,6 +11,7 @@ export default function HomePage() {
   const [tasks, setTasks] = useState<SuggestionItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tasksStageVisible, setTasksStageVisible] = useState(false);
 
   const isEmpty = useMemo(() => !goals.length && !tasks.length, [goals.length, tasks.length]);
 
@@ -23,6 +24,7 @@ export default function HomePage() {
     setError(null);
     setGoals([]);
     setTasks([]);
+    setTasksStageVisible(false);
     setIsGenerating(true);
 
     try {
@@ -99,6 +101,17 @@ export default function HomePage() {
     await updateItem(tasks, setTasks);
   };
 
+  useEffect(() => {
+    if (goals.length > 0) {
+      const timer = window.setTimeout(() => setTasksStageVisible(true), 120);
+      return () => window.clearTimeout(timer);
+    }
+
+    setTasksStageVisible(false);
+  }, [goals.length]);
+
+  const showTasksStage = tasksStageVisible || tasks.length > 0;
+
   return (
     <main className="min-h-screen bg-canvas px-6 py-12">
       <section className="mx-auto flex max-w-5xl flex-col gap-10">
@@ -134,48 +147,72 @@ export default function HomePage() {
           )}
         </header>
 
-        <section className="grid gap-8 md:grid-cols-2">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl text-ink">Цели работы</h2>
-              <span className="text-xs uppercase tracking-[0.2em] text-slate">Goal</span>
+        <section className="funnel flex flex-col gap-10 rounded-3xl border border-border bg-card px-6 py-10 shadow-sm md:px-10">
+          <div className="relative flex gap-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-sm font-semibold text-ink">
+              01
             </div>
-            {goals.length ? (
-              goals.map((goal) => (
-                <ActionCard
-                  key={goal.id}
-                  item={goal}
-                  onRephrase={handleRephrase}
-                  onReplace={handleReplace}
-                />
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border px-6 py-8 text-sm text-slate">
-                Здесь появятся варианты целей после генерации.
+            <div className="flex flex-1 flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="font-serif text-2xl text-ink">Формирование целей</h2>
+                <span className="text-xs uppercase tracking-[0.2em] text-slate">Goal stage</span>
               </div>
-            )}
+              <p className="text-sm text-slate">
+                На первом шаге формируем несколько формулировок цели. Отсюда начинается
+                декомпозиция.
+              </p>
+              <div className="flex flex-col gap-4">
+                {goals.length ? (
+                  goals.map((goal) => (
+                    <ActionCard
+                      key={goal.id}
+                      item={goal}
+                      onRephrase={handleRephrase}
+                      onReplace={handleReplace}
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border px-6 py-8 text-sm text-slate">
+                    Здесь появятся варианты целей после генерации.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl text-ink">Задачи исследования</h2>
-              <span className="text-xs uppercase tracking-[0.2em] text-slate">Task</span>
-            </div>
-            {tasks.length ? (
-              tasks.map((task) => (
-                <ActionCard
-                  key={task.id}
-                  item={task}
-                  onRephrase={handleRephrase}
-                  onReplace={handleReplace}
-                />
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border px-6 py-8 text-sm text-slate">
-                Здесь появятся варианты задач после генерации.
+          {showTasksStage && (
+            <div className="funnel-stage relative flex gap-6 is-visible">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-sm font-semibold text-ink">
+                02
               </div>
-            )}
-          </div>
+              <div className="flex flex-1 flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="font-serif text-2xl text-ink">Декомпозиция на задачи</h2>
+                  <span className="text-xs uppercase tracking-[0.2em] text-slate">Task stage</span>
+                </div>
+                <p className="text-sm text-slate">
+                  После появления целей мы автоматически раскладываем их на перечень
+                  исследовательских задач.
+                </p>
+                <div className="flex flex-col gap-4">
+                  {tasks.length ? (
+                    tasks.map((task) => (
+                      <ActionCard
+                        key={task.id}
+                        item={task}
+                        onRephrase={handleRephrase}
+                        onReplace={handleReplace}
+                      />
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border px-6 py-8 text-sm text-slate">
+                      Подбираем задачи на основе целей — первые варианты появятся через мгновение.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {isGenerating && isEmpty && (
